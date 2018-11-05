@@ -37,6 +37,8 @@
 </script>
 -->
 
+<!-- Reference: http://www.cs.toronto.edu/~jacobson/phong-demo/ -->
+
 <script id="fragmentShader" type="fragment">
     #extension GL_OES_standard_derivatives : enable
 
@@ -48,6 +50,8 @@
     varying vec3 vSurfaceToPointLight;
     void main(void) {
         gl_FragColor = fragcolor;
+        float dist = length(vSurfaceToPointLight);
+        float att = (1.0 / (1.0 + (0.000025 * dist * dist)));
 
         // point light
         vec3 U = dFdx(vertexViewSpace.xyz);                     
@@ -55,11 +59,11 @@
         vec3 N1 = normalize(cross(U, V));
         vec3 N2 = normalize(vSurfaceToPointLight);
         float pointLight = dot(N1, N2);
-        gl_FragColor.rgb *= pointLight;
+        gl_FragColor.rgb *= pointLight * att;
 
         // directional light
-        // float dirLight = dot(N1, uDirectionalLight);
-        // gl_FragColor.rgb *= dirLight;
+        float dirLight = dot(N1, uDirectionalLight);
+        gl_FragColor.rgb *= dirLight;
     }
 </script>
 
@@ -213,8 +217,8 @@
         gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
         gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
         gl.uniformMatrix4fv(shaderProgram.pointLightWorld, false, lightMatrix);
-        gl.uniform3fv(shaderProgram.pointLightPosition, [10, 10, 10]);
-        gl.uniform3fv(shaderProgram.dirLightPosition, vec3.normalize([40, -20, -20]));
+        gl.uniform3fv(shaderProgram.pointLightPosition, [0, 0, 5]);
+        gl.uniform3fv(shaderProgram.dirLightPosition, vec3.normalize([-10, -10, 40]));
     }
 
     function degToRad(degrees) {
@@ -256,7 +260,7 @@
 
     function loadTeapot() {
         var request = new XMLHttpRequest();
-        request.open("GET", "Teapot.json");
+        request.open("GET", "Teapot_Origin.json");
         request.onreadystatechange = function () {
             if (request.readyState == 4) {
                 handleLoadedTeapot(JSON.parse(request.responseText));
@@ -280,9 +284,7 @@
         mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
 
         mat4.identity(mvMatrix);
-
         mat4.translate(mvMatrix, [0, 0, -40]);
-
         mat4.rotate(mvMatrix, degToRad(teapotAngle), [0, 1, 0]);
         lightMatrix = mvMatrix;
 
