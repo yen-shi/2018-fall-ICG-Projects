@@ -7,32 +7,56 @@
 <link rel="stylesheet" type="text/css" href="index.css">
 <script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
 <script type="text/javascript" src="webgl-utils.js"></script>
-<script src="https://webglfundamentals.org/webgl/resources/webgl-utils.js"></script>
 <script src="https://webglfundamentals.org/webgl/resources/webgl-lessons-ui.js"></script>
+<script src="https://webglfundamentals.org/webgl/resources/webgl-utils.js"></script>
+<script src="https://webglfundamentals.org/webgl/resources/m4.js"></script>
 
 <script id="fragmentShader" type="fragment">
     precision mediump float;
+
+    // varyings for vetex and fragment shaders
     varying vec4 fragcolor;
+    varying vec3 normal;
+    // varying vec4 vertexViewSpace;
+
+    // directional light
+    uniform vec3 uDirectionalLight;
+    // point light
+    // varying vec3 vSurfaceToPointLight;
+
     void main(void) {
+        vec3 nNormal = normalize(normal);
+        float light = dot(nNormal, uDirectionalLight);
         gl_FragColor = fragcolor;
+        gl_FragColor.rgb *= light;
     }
 </script>
 
 <script id="vertexShader" type="vertex">
+    // object attributes
     attribute vec3 aVertexPosition;
     attribute vec3 aFrontColor;
+    attribute vec3 aNormal;
 
+    // environment attributes
     uniform mat4 uMVMatrix;
     uniform mat4 uPMatrix;
 
-	varying vec4 fragcolor;
+    // varyings for vetex and fragment shaders
+    varying vec4 fragcolor;
+    varying vec3 normal;
+    // varying vec4 vertexViewSpace;
+
+    // point light
+    // uniform vec3 uPointLightPosition;
+    // varying vec3 vSurfaceToPointLight;
 
     void main(void) {
         gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-		fragcolor = vec4(aFrontColor.rgb, 1.0);;
+        fragcolor = vec4(aFrontColor.rgb, 1.0);;
+        normal = aNormal;
     }
 </script>
-
 
 <script type="text/javascript">
     var gl;
@@ -108,16 +132,22 @@
         shaderProgram.vertexFrontColorAttribute = gl.getAttribLocation(shaderProgram, "aFrontColor");
         gl.enableVertexAttribArray(shaderProgram.vertexFrontColorAttribute);
 
+        shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aNormal");
+        gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
+
         shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
         shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+        shaderProgram.directionalLight = gl.getUniformLocation(shaderProgram, "uDirectionalLight");
     }
 
     var mvMatrix = mat4.create();
     var pMatrix = mat4.create();
+    var dirLightPosition = [-0.5, -0.5, 1];
 
     function setMatrixUniforms() {
         gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
         gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+        gl.uniform3fv(shaderProgram.directionalLight, m4.normalize(dirLightPosition));
     }
 
     function degToRad(degrees) {
@@ -193,6 +223,24 @@
         return object;
     }
 
+    // Check for the various File API support.
+    // if (window.File && window.FileReader && window.FileList && window.Blob)
+    //     console.log("Great success! All the File APIs are supported.");
+    // else
+    //     alert("the file apis are not fully supported in this browser.");
+
+    // let reader = new FileReader();
+    // reader.onload = (function(theFile) {
+    //     return function(e) {
+    //         console.log("Read file ", escape(theFile.name), " done");
+    //         var lines = e.target.result.split(
+    //             /[\r\n]+/g);  // tolerate both Windows and Unix linebreaks
+    //         console.log("READ", lines[0]);
+    //     };
+    // })(filename);
+
+    // reader.readAsText(filename);
+
     function loadObject(filename) {
         var request = new XMLHttpRequest();
         request.open("GET", filename);
@@ -203,6 +251,7 @@
                 objects[filename] = obj
             }
         }
+        request.overrideMimeType("application/json");
         request.send();
     }
 
@@ -237,6 +286,8 @@
                 gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, obj.vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
                 gl.bindBuffer(gl.ARRAY_BUFFER, obj.vertexFrontColorBuffer);
                 gl.vertexAttribPointer(shaderProgram.vertexFrontColorAttribute, obj.vertexFrontColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+                gl.bindBuffer(gl.ARRAY_BUFFER, obj.vertexNormalBuffer);
+                gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, obj.vertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, obj.vertexPositionBuffer.numItems);
             }
         });
@@ -297,6 +348,11 @@
         drawScene();
     };
 
+    updateDirectionalLight = (idx) => (event, ui) => {
+        dirLightPosition[idx] = ui.value;
+        drawScene();
+    };
+
     let valueScales = {
         "Scale": [0.1, 10, 0.01, 2],
         "Rotation": [-180, 180, 1, 0],
@@ -317,6 +373,18 @@
                       step: valueScales[type][2],
                       precision: valueScales[type][3] });
     });});});
+    ["X", "Y", "Z"].forEach((axis, idx) => {
+        let type = "Position";
+        let objId = "DirectionalLight" + type + axis;
+        uiList.appendChild(createElementFromHTML(`<div id="${ objId }"></div>`));
+        webglLessonsUI.setupSlider("#" + objId,
+            { value: dirLightPosition[idx],
+                slide: updateDirectionalLight(idx),
+                min: valueScales[type][0],
+                max: valueScales[type][1],
+                step: valueScales[type][2],
+                precision: valueScales[type][3] });
+            });
 </script>
 
 </html>
