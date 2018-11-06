@@ -1,0 +1,40 @@
+@import url("https://webglfundamentals.org/webgl/resources/webgl-tutorials.css");
+body {
+    margin: 0;
+    font-family: 'Karla', sans-serif;
+}
+
+canvas {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}
+
+.main {
+    position: relative;
+    width: 95%;
+    margin: auto;
+}
+
+.header {
+    position: relative;
+    height: 100px;
+}
+
+.title-wrapper {
+    position: relative;
+    top: 10px;
+    width: 800px;
+    height: 80px;
+    margin: auto;
+    background-color: #ffffa3;
+}
+
+.title {
+    position: relative;
+    float: left;
+    font-size: 36px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
