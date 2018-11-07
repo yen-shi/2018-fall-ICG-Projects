@@ -1,20 +1,28 @@
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
+
 var dirLightPosition = [-5, 8, 8];
 var pointLightPosition = [60, 60, 60];
 var viewPosition = [60, 60, 60];
-var textureMode = 0, shadingMode = 0;
+
+var ambientLightColor = [0.0, 0.0, 0.0];
+var dirLightColor = [0.0, 0.0, 0.0];
+var pointLightColor = [1.0, 1.0, 1.0];
+var textureMode = [0];
+var shadingMode = [0];
 
 function setMatrixUniforms() {
     gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
     gl.uniform3fv(shaderProgram.directionalLight, m4.normalize(dirLightPosition));
+    gl.uniform3fv(shaderProgram.directionalLightColor, dirLightColor);
     gl.uniform3fv(shaderProgram.pointLight, pointLightPosition);
-    gl.uniform3fv(shaderProgram.pointLightColor, m4.normalize([0.6, 0.9, 0.9]));
+    gl.uniform3fv(shaderProgram.pointLightColor, pointLightColor);
+    gl.uniform3fv(shaderProgram.ambientLightColor, ambientLightColor);
     gl.uniform3fv(shaderProgram.viewPosition, viewPosition);
-    gl.uniform1i(shaderProgram.textureMode, textureMode);
-    gl.uniform1i(shaderProgram.shadingMode, shadingMode);
-    gl.uniform1i(shaderProgram.shadingModeFrag, shadingMode);
+    gl.uniform1i(shaderProgram.textureMode, textureMode[0]);
+    gl.uniform1i(shaderProgram.shadingMode, shadingMode[0]);
+    gl.uniform1i(shaderProgram.shadingModeFrag, shadingMode[0]);
 }
 
 function degToRad(degrees) {
@@ -206,13 +214,13 @@ function drawScene() {
     mat4.perspective(45, aspect, 0.1, 100.0, pMatrix);
 
     mat4.identity(cameraMatrix);
-    mat4.rotateY(cameraMatrix, degToRad(teapotAngle));
+    // mat4.rotateY(cameraMatrix, degToRad(teapotAngle));
     mat4.translate(cameraMatrix, [0, 0, 50]);
     mat4.inverse(cameraMatrix, cameraMatrix);
     mat4.multiply(pMatrix, cameraMatrix, pMatrix);
 
     setPositions();
-    textureMode = 0;
+    textureMode[0] = 0;
     gl.enableVertexAttribArray(shaderProgram.vertexFrontColorAttribute);
     filenames.forEach((filename) => {
         if (filename in objects) {
@@ -227,7 +235,7 @@ function drawScene() {
     });
     gl.disableVertexAttribArray(shaderProgram.vertexFrontColorAttribute);
 
-    textureMode = 1;
+    textureMode[0] = 1;
     gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
     fileWithTextures.forEach((filename) => {
         if (filename in objects) {

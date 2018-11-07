@@ -10,43 +10,54 @@ varying vec3 vSurfaceToView;
 uniform int uShadingModeFrag;
 
 // uniform vec3 uLights;
+// ambient light
+uniform vec3 uAmbientLightColor;
 // directional light
 uniform vec3 uDirectionalLight;
+uniform vec3 uDirectionalLightColor;
 // point light
 varying vec3 vSurfaceToPointLight;
-varying vec3 N, L;
-varying float lambertian, specular, shininessVal;
+varying vec3 vPointLightColor;
+varying float shininessVal;
+varying vec3 vGouraudLight;
 
 void main(void) {
     gl_FragColor = fragcolor;
     vec3 nNormal = normalize(normal);
-
-    vec3 U = dFdx(surfaceWorldPosition);                     
-    vec3 V = dFdy(surfaceWorldPosition);                 
-    vec3 N1 = normalize(cross(U, V));
     
     // Mode 0: flat shading
-    if (uShadingModeFrag == 0)
+    if (uShadingModeFrag == 0) {
+        vec3 U = dFdx(surfaceWorldPosition);                     
+        vec3 V = dFdy(surfaceWorldPosition);                 
+        vec3 N1 = normalize(cross(U, V));
         nNormal = N1;
+    }
 
     vec3 surfaceToLightDirection = normalize(vSurfaceToPointLight);
-    float directionalLight = dot(nNormal, uDirectionalLight);
-    float pointLight = dot(nNormal, surfaceToLightDirection);
-    float accumulateLight = min(directionalLight + pointLight, 1.0);
+    vec3 directionalLight = max(dot(nNormal, uDirectionalLight), 0.0) * uDirectionalLightColor;
+    vec3 pointLight = max(dot(nNormal, surfaceToLightDirection), 0.0) * vPointLightColor;
 
-    // Mode 1: only light
-    if (uShadingModeFrag == 0 || uShadingModeFrag == 3)
-        gl_FragColor.rgb *= pointLight;
-
-    float localSpecular = 0.0;
-    if(lambertian > 0.0) {
-        vec3 R = reflect(-L, nNormal);      // Reflected light vector
-        vec3 V = normalize(vSurfaceToView); // Vector to viewer
-        // Compute the specular term
-        float specAngle = max(dot(R, V), 0.0);
-        localSpecular = pow(specAngle, shininessVal);
+    // Mode 2: phong shading
+    if (uShadingModeFrag == 2) {
+        float specular = 0.0;
+        vec3 L = normalize(vSurfaceToPointLight);
+        float lambertian = max(dot(nNormal, L), 0.0);
+        if(lambertian > 0.0) {
+            vec3 R = reflect(-L, nNormal);      // Reflected light vector
+            vec3 V = normalize(vSurfaceToView); // Vector to viewer
+            // Compute the specular term
+            float specAngle = max(dot(R, V), 0.0);
+            specular = pow(specAngle, shininessVal);
+        }
+        pointLight = (0.8 * lambertian + specular) * vPointLightColor;
     }
-    if (uShadingModeFrag == 2)
-        gl_FragColor = vec4((0.8 * lambertian + localSpecular) * fragcolor.rgb, 1.0);        
+
+    vec3 accumulateLight = uAmbientLightColor + directionalLight;
+    if (uShadingModeFrag == 1)
+        accumulateLight += vGouraudLight;
+    else
+        accumulateLight += pointLight;
+    accumulateLight = min(accumulateLight, vec3(1.0, 1.0, 1.0));
+    gl_FragColor = vec4(accumulateLight * fragcolor.rgb, fragcolor.a);
 }
 `;

@@ -30,12 +30,14 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-3">
+            <div class="col-2">
             </div>
             <div class="col-6"></div>
-            <div class="col-3">
-                <div id="uiContainer">
-                    <div id="ui">
+            <div class="col-4">
+                <div class="controls">
+                    <div id="uiContainer">
+                        <div id="ui">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -44,96 +46,9 @@
     <div class="footer"></div>
 </body>
 
-<script type="text/javascript">
-    function createElementFromHTML(htmlString) {
-        var div = document.createElement('div');
-        div.innerHTML = htmlString.trim();
+<script type="text/javascript" src="scripts/js/controls.js"></script>
 
-        // Change this to div.childNodes to support multiple top-level nodes
-        return div.firstChild;
-    }
-
-    updateObjectValues = (name, type, typeIdx, idx) => (event, ui) => {
-        objTransform[name][typeIdx][idx] = ui.value;
-        drawScene();
-    };
-
-    let valueScales = {
-        "Scale": [0.1, 10, 0.01, 2],
-        "Rotation": [-180, 180, 1, 0],
-        "Position": [-100, 100, 0.1, 2],
-    }
-
-    let uiList = document.getElementById("ui");
-    filenames.concat(fileWithTextures).forEach((filename) => {
-        ["Scale", "Rotation", "Position"].forEach((type, typeIdx) => {
-            ["X", "Y", "Z"].forEach((axis, idx) => {
-                let objId = filename.slice(0, -5) + type + axis;
-                uiList.appendChild(createElementFromHTML(`<div id="${ objId }"></div>`));
-                webglLessonsUI.setupSlider("#" + objId,
-                    { value: objTransform[filename][typeIdx][idx],
-                      slide: updateObjectValues(filename, type, typeIdx, idx),
-                      min: valueScales[type][0],
-                      max: valueScales[type][1],
-                      step: valueScales[type][2],
-                      precision: valueScales[type][3] });
-    });});});
-
-    updateDirectionalLight = (idx) => (event, ui) => {
-        dirLightPosition[idx] = ui.value;
-        drawScene();
-    };
-
-    ["X", "Y", "Z"].forEach((axis, idx) => {
-        let type = "Position";
-        let objId = "DirectionalLight" + type + axis;
-        uiList.appendChild(createElementFromHTML(`<div id="${ objId }"></div>`));
-        webglLessonsUI.setupSlider("#" + objId,
-            { value: dirLightPosition[idx],
-                slide: updateDirectionalLight(idx),
-                min: valueScales[type][0],
-                max: valueScales[type][1],
-                step: valueScales[type][2],
-                precision: valueScales[type][3] });
-            });
-
-    updatePointLight = (idx) => (event, ui) => {
-        pointLightPosition[idx] = ui.value;
-        drawScene();
-    };
-
-    ["X", "Y", "Z"].forEach((axis, idx) => {
-        let type = "Position";
-        let objId = "PointLight" + type + axis;
-        uiList.appendChild(createElementFromHTML(`<div id="${ objId }"></div>`));
-        webglLessonsUI.setupSlider("#" + objId,
-            { value: pointLightPosition[idx],
-                slide: updatePointLight(idx),
-                min: valueScales[type][0],
-                max: valueScales[type][1],
-                step: valueScales[type][2],
-                precision: valueScales[type][3] });
-            });
-
-    updateShadingMode = (event, ui) => {
-        shadingMode = ui.value;
-        drawScene();
-    };
-
-    {
-        let objId = "ShadingMode";
-        uiList.appendChild(createElementFromHTML(`<div id="${ objId }"></div>`));
-        webglLessonsUI.setupSlider("#" + objId,
-            { value: shadingMode,
-              slide: updateShadingMode,
-              min: 0,
-              max: 3,
-              step: 1,
-              precision: 0 });
-    };
-</script>
 <script type="text/javascript" src="scripts/js/jquery-3.3.1.min.js"></script>
 <script type="text/javascript" src="scripts/js/bootstrap.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.2.3/bootstrap-slider.min.js"></script>
-
+<!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.2.3/bootstrap-slider.min.js"></script> -->
 </html>

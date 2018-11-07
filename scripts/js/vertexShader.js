@@ -27,43 +27,43 @@ uniform vec3 uViewPosition;
 uniform vec3 uPointLightPosition;
 uniform vec3 uPointLightColor;
 varying vec3 vSurfaceToPointLight;
-varying vec3 N, L;
-varying float lambertian, specular, shininessVal;
+varying vec3 vPointLightColor;
+varying vec3 vGouraudLight;
+varying float shininessVal;
 
 void main(void) {
     surfaceWorldPosition = mat3(uMVMatrix) * aVertexPosition;
     vSurfaceToView = uViewPosition - surfaceWorldPosition;
     vSurfaceToPointLight = uPointLightPosition - surfaceWorldPosition;
-    vec3 halfVector = normalize(vSurfaceToPointLight + vSurfaceToView);
-
-    float dist = length(vSurfaceToPointLight);
-    float att = (1.0 / (1.0 + (0.00005 * dist * dist)));
-
-    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
     normal = mat3(uMVMatrix) * aNormal;
-
-    N = normalize(normal);
-    L = normalize(vSurfaceToPointLight);
-
-    lambertian = max(dot(N, L), 0.0);
     shininessVal = 40.0;
+    vPointLightColor = uPointLightColor;
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
 
-    specular = 0.0;
-    if(lambertian > 0.0) {
-        specular = dot(N, halfVector);
-        specular = pow(specular, shininessVal);
-    }
-
-    if (uTextureMode != 1) {
+    // has texture or not
+    if (uTextureMode != 1)
         fragcolor = vec4(aFrontColor.rgb, 1.0);
-    }
     else {
         vec4 fragmentColor;
-        fragmentColor = texture2D(uSampler, vec2(aTextureCoord.s, aTextureCoord.t));
-        fragcolor = vec4(fragmentColor.rgb, fragmentColor.a);;
+        fragcolor = texture2D(uSampler, vec2(aTextureCoord.s, aTextureCoord.t));
     }
 
-    if (uShadingMode == 1)
-        fragcolor = vec4((0.8 * lambertian + specular) * fragcolor.rgb, 1.0);
+    // Mode 2: gouraud shading
+    if (uShadingMode == 1) {
+        vec3 halfVector = normalize(vSurfaceToPointLight + vSurfaceToView);
+        // float dist = length(vSurfaceToPointLight);
+        // float att = (1.0 / (1.0 + (0.00005 * dist * dist)));
+
+        vec3 N = normalize(normal);
+        vec3 L = normalize(vSurfaceToPointLight);
+
+        float lambertian = max(dot(N, L), 0.0);
+        float specular = 0.0;
+        if(lambertian > 0.0) {
+            specular = max(dot(N, halfVector), 0.0);
+            specular = pow(specular, shininessVal);
+        }
+        vGouraudLight = (0.8 * lambertian + specular) * vPointLightColor;
+    }
 }
 `;
