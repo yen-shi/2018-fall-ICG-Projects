@@ -5,11 +5,10 @@ var dirLightPosition = [-5, 8, 8];
 var pointLightPosition = [60, 60, 60];
 var viewPosition = [60, 60, 60];
 
-var ambientLightColor = [0.0, 0.0, 0.0];
-var dirLightColor = [0.0, 0.0, 0.0];
-var pointLightColor = [1.0, 1.0, 1.0];
-var textureMode = [0];
-var shadingMode = [0];
+var ambientLightColor = [0.2, 0.2, 0.2];
+var dirLightColor = [0.2, 0.2, 0.2];
+var pointLightColor = [0.6, 0.6, 0.6];
+var textureMode = [0], shadingMode = [0], rotationMode = [0];
 
 function setMatrixUniforms() {
     gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
@@ -51,19 +50,19 @@ var objects = {}
 var objTransform = {
     // Scale, Rotation, Position
     "Csie.json": [
-        [1, 1, 1],
+        [20, 20, 20],
         [-90, 0, 0],
-        [-0.58, -0.32, -0.47]
+        [-1.6, -0.35, -0.30]
     ],
     "Teapot.json": [
-        [5, 5, 5],
+        [30, 30, 30],
         [-90, 0, 0],
         [0.81, 0.2, -1.04]
     ],
     "Plant.json": [
-        [1, 1, 1],
+        [20, 20, 20],
         [-90, 0, 0],
-        [1.18, -0.53, -0.47]
+        [1.5, -0.5, -0.35]
     ],
     "Teapot_Origin.json": [
         [1, 1, 1],
@@ -188,12 +187,6 @@ function initTextures() {
     galvanizedTexture.image.src = "red.jpg";
 }
 
-var teapotTransform = [
-    [1, 1, 1],
-    [0, -90, 0],
-    [0, 0, 0]
-]
-
 // Compute a matrix for the camera
 var cameraMatrix = mat4.create();
 var teapotAngle = 0;
@@ -214,7 +207,12 @@ function drawScene() {
     mat4.perspective(45, aspect, 0.1, 100.0, pMatrix);
 
     mat4.identity(cameraMatrix);
-    // mat4.rotateY(cameraMatrix, degToRad(teapotAngle));
+    if (rotationMode[0] == 1)
+        mat4.rotateY(cameraMatrix, degToRad(teapotAngle));
+    if (rotationMode[0] == 2)
+        mat4.rotateX(cameraMatrix, degToRad(teapotAngle));
+    if (rotationMode[0] == 3)
+        mat4.rotateZ(cameraMatrix, degToRad(teapotAngle));
     mat4.translate(cameraMatrix, [0, 0, 50]);
     mat4.inverse(cameraMatrix, cameraMatrix);
     mat4.multiply(pMatrix, cameraMatrix, pMatrix);

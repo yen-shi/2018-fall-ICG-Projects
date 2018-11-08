@@ -20,7 +20,7 @@ function genOneSlider(objId, scales, valueArr, idx) {
 }
 
 let valueScales = {
-    "Scale": [0.1, 10, 0.01, 2],
+    "Scale": [0.1, 30, 0.01, 2],
     "Rotation": [-180, 180, 1, 0],
     "Position": [-100, 100, 0.1, 2],
     "Color": [0, 1, 0.01, 2],
@@ -29,6 +29,7 @@ let valueScales = {
 let uiList = document.getElementById("ui");
 
 genOneSlider("ShadingMode", [0, 3, 1, 0], shadingMode, 0);
+genOneSlider("RotationMode", [0, 3, 1, 0], rotationMode, 0);
 
 ["X", "Y", "Z"].forEach((axis, idx) => {
     let type = "Position";
