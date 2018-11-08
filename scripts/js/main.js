@@ -44,30 +44,35 @@ class Model3D {
     }
 }
 
-var filenames = ["Csie.json", "Teapot.json", "Plant.json"];
+// var filenames = ["Csie.json", "Teapot.json", "Plant.json"];
+var filenames = ["Csie.json", "Plant.json"];
 var fileWithTextures = ["Teapot_Origin.json"];
 var objects = {}
 var objTransform = {
-    // Scale, Rotation, Position
+    // Scale, Rotation, Position, Shear
     "Csie.json": [
-        [20, 20, 20],
+        [1, 1, 1],
         [-90, 0, 0],
-        [-1.6, -0.35, -0.30]
+        [-15, -0.5, -4],
+        [90, 90, 90],
     ],
     "Teapot.json": [
-        [30, 30, 30],
+        [1, 1, 1],
         [-90, 0, 0],
-        [0.81, 0.2, -1.04]
+        [0.81, 0.2, -1.04],
+        [90, 90, 90],
     ],
     "Plant.json": [
-        [20, 20, 20],
+        [1, 1, 1],
         [-90, 0, 0],
-        [1.5, -0.5, -0.35]
+        [14, -6, -4],
+        [90, 90, 90],
     ],
     "Teapot_Origin.json": [
         [1, 1, 1],
         [0, -90, 0],
-        [0, 0, 0]
+        [0, 0, 0],
+        [90, 90, 90],
     ],
 }
 
@@ -81,16 +86,28 @@ function setPositions() {
             mat4.rotateY(curMatrix, degToRad(objTransform[filename][1][1]));
             mat4.rotateZ(curMatrix, degToRad(objTransform[filename][1][2]));
             mat4.translate(curMatrix, objTransform[filename][2]);
+
+            let shearMatrix = mat4.create();
+            for(let i = 0; i < 2; ++i) {
+                mat4.identity(shearMatrix);
+                shearMatrix[4 + i * 4] = 1 / Math.tan(degToRad(objTransform[filename][3][i]));
+                mat4.multiply(curMatrix, shearMatrix, curMatrix);
+            }
+
+            mat4.translate(curMatrix, objTransform[filename][2]);
         }
     });
 }
 
-function handleLoadedObject(data, hasTexture) {
+function handleLoadedObject(data, hasTexture, originalScale) {
     let object = new Model3D(hasTexture);
     gl.bindBuffer(gl.ARRAY_BUFFER, object.vertexNormalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.vertexNormals), gl.STATIC_DRAW);
     object.vertexNormalBuffer.itemSize = 3;
     object.vertexNormalBuffer.numItems = data.vertexNormals.length / 3;
+
+    for(let i = 0; i < data.vertexPositions.length; ++i)
+        data.vertexPositions[i] *= originalScale;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, object.vertexPositionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.vertexPositions), gl.STATIC_DRAW);
@@ -140,12 +157,19 @@ function handleLoadedObject(data, hasTexture) {
 
 // reader.readAsText(filename);
 
+var originalScales = {
+    "Csie.json": 20,
+    "Teapot.json": 30,
+    "Plant.json": 20,
+    "Teapot_Origin.json": 1,
+}
+
 function loadObject(filename, hasTexture) {
     var request = new XMLHttpRequest();
     request.open("GET", filename);
     request.onreadystatechange = function () {
         if (request.readyState == 4) {
-            let obj = handleLoadedObject(JSON.parse(request.responseText), hasTexture);
+            let obj = handleLoadedObject(JSON.parse(request.responseText), hasTexture, originalScales[filename]);
             obj.matrix = mat4.create();
             objects[filename] = obj
         }
@@ -183,7 +207,7 @@ function initTextures() {
     galvanizedTexture.image.onload = function () {
         handleLoadedTexture(galvanizedTexture)
     }
-    galvanizedTexture.image.src = "galvanizedTexture.jpg";
+    // galvanizedTexture.image.src = "galvanizedTexture.jpg";
     galvanizedTexture.image.src = "red.jpg";
 }
 
@@ -220,7 +244,8 @@ function drawScene() {
     setPositions();
     textureMode[0] = 0;
     gl.enableVertexAttribArray(shaderProgram.vertexFrontColorAttribute);
-    filenames.forEach((filename) => {
+    filenames.forEach((filename, idx) => {
+        shadingMode[0] = idx;
         if (filename in objects) {
             let obj = objects[filename];
             mat4.set(obj.matrix, mvMatrix);
@@ -236,6 +261,7 @@ function drawScene() {
     textureMode[0] = 1;
     gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
     fileWithTextures.forEach((filename) => {
+        shadingMode[0] = 2;
         if (filename in objects) {
             let obj = objects[filename];
             mat4.set(obj.matrix, mvMatrix);

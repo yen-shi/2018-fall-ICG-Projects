@@ -23,6 +23,7 @@ let valueScales = {
     "Scale": [0.1, 30, 0.01, 2],
     "Rotation": [-180, 180, 1, 0],
     "Position": [-100, 100, 0.1, 2],
+    "Shear": [45, 135, 0.1, 2],
     "Color": [0, 1, 0.01, 2],
 }
 
@@ -60,7 +61,7 @@ genOneSlider("RotationMode", [0, 3, 1, 0], rotationMode, 0);
 });
 
 filenames.concat(fileWithTextures).forEach((filename) => {
-    ["Scale", "Rotation", "Position"].forEach((type, typeIdx) => {
+    ["Scale", "Rotation", "Position", "Shear"].forEach((type, typeIdx) => {
         ["X", "Y", "Z"].forEach((axis, idx) => {
             genOneSlider(filename.slice(0, -5) + type + axis, valueScales[type], objTransform[filename][typeIdx], idx);
 });});});
