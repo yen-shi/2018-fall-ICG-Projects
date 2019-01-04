@@ -46,7 +46,7 @@ class Model3D {
 
 // var filenames = ["Csie.json", "Teapot.json", "Plant.json"];
 var filenames = ["Csie.json", "Plant.json"];
-var fileWithTextures = ["Teapot_Origin.json"];
+var fileWithTextures = ["Teapot_round.json"];
 var objects = {}
 var objTransform = {
     // Scale, Rotation, Position, Shear
@@ -68,7 +68,7 @@ var objTransform = {
         [14, -6, -4],
         [90, 90, 90],
     ],
-    "Teapot_Origin.json": [
+    "Teapot_round.json": [
         [1, 1, 1],
         [0, -90, 0],
         [0, 0, 0],
@@ -161,12 +161,13 @@ var originalScales = {
     "Csie.json": 20,
     "Teapot.json": 30,
     "Plant.json": 20,
-    "Teapot_Origin.json": 1,
+    "Teapot_round.json": 1,
 }
 
 function loadObject(filename, hasTexture) {
-    var request = new XMLHttpRequest();
-    request.open("GET", filename);
+    const models_path = './models';
+    let request = new XMLHttpRequest();
+    request.open("GET", join(models_path, filename));
     request.onreadystatechange = function () {
         if (request.readyState == 4) {
             let obj = handleLoadedObject(JSON.parse(request.responseText), hasTexture, originalScales[filename]);
@@ -208,7 +209,7 @@ function initTextures() {
         handleLoadedTexture(galvanizedTexture)
     }
     // galvanizedTexture.image.src = "galvanizedTexture.jpg";
-    galvanizedTexture.image.src = "red.jpg";
+    galvanizedTexture.image.src = "textures/red.jpg";
 }
 
 // Compute a matrix for the camera
@@ -245,7 +246,7 @@ function drawScene() {
     textureMode[0] = 0;
     gl.enableVertexAttribArray(shaderProgram.vertexFrontColorAttribute);
     filenames.forEach((filename, idx) => {
-        shadingMode[0] = idx;
+        // shadingMode[0] = idx;
         if (filename in objects) {
             let obj = objects[filename];
             mat4.set(obj.matrix, mvMatrix);
@@ -261,7 +262,7 @@ function drawScene() {
     textureMode[0] = 1;
     gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
     fileWithTextures.forEach((filename) => {
-        shadingMode[0] = 2;
+        // shadingMode[0] = 2;
         if (filename in objects) {
             let obj = objects[filename];
             mat4.set(obj.matrix, mvMatrix);
@@ -281,9 +282,9 @@ function drawScene() {
 
 var lastTime = 0;
 function animate() {
-    var timeNow = new Date().getTime();
+    let timeNow = new Date().getTime();
     if (lastTime != 0) {
-        var elapsed = timeNow - lastTime;
+        let elapsed = timeNow - lastTime;
         teapotAngle += 0.03 * elapsed;
     }
     lastTime = timeNow;
