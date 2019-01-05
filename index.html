@@ -7,23 +7,24 @@
 <!-- include font -->
 <link href="https://fonts.googleapis.com/css?family=Karla" rel="stylesheet"> 
 <!-- include framework -->
-<link rel="stylesheet" type="text/css" href="scripts/css/lib/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="src/css/lib/bootstrap.min.css">
 <!-- my css -->
-<link rel="stylesheet" type="text/css" href="scripts/css/main.css">
+<link rel="stylesheet" type="text/css" href="src/css/main.css">
+<link rel="stylesheet" type="text/css" href="src/css/controls.css">
 
 <!-- include libraries -->
-<script type="text/javascript" src="scripts/js/lib/glMatrix-0.9.5.min.js"></script>
-<script type="text/javascript" src="scripts/js/lib/webglfundamentals-lessons-ui.js"></script>
-<script type="text/javascript" src="scripts/js/lib/webglfundamentals-m4.js"></script>
-<script type="text/javascript" src="scripts/js/lib/webglfundamentals-utils.js"></script>
-<script type="text/javascript" src="scripts/js/lib/google-webgl-utils.js"></script>
-<script type="text/javascript" src="scripts/js/lib/utils.js"></script>
+<script type="text/javascript" src="src/js/lib/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="src/js/lib/webglfundamentals-lessons-ui.js"></script>
+<script type="text/javascript" src="src/js/lib/webglfundamentals-m4.js"></script>
+<script type="text/javascript" src="src/js/lib/webglfundamentals-utils.js"></script>
+<script type="text/javascript" src="src/js/lib/google-webgl-utils.js"></script>
+<script type="text/javascript" src="src/js/lib/utils.js"></script>
 
 <!-- my js -->
-<script type="text/javascript" src="scripts/js/fragmentShader.js"></script>
-<script type="text/javascript" src="scripts/js/vertexShader.js"></script>
-<script type="text/javascript" src="scripts/js/my-webgl-utils.js"></script>
-<script type="text/javascript" src="scripts/js/main.js"></script>
+<script type="text/javascript" src="src/js/fragmentShader.js"></script>
+<script type="text/javascript" src="src/js/vertexShader.js"></script>
+<script type="text/javascript" src="src/js/my-webgl-utils.js"></script>
+<script type="text/javascript" src="src/js/main.js"></script>
 
 </head>
 
@@ -37,6 +38,17 @@
         </div>
         <div class="row">
             <div class="col-2">
+                <ul class="objs-list">
+                    <li>
+                        <div class="obj-tag">
+                            <div class="cross"></div>
+                            <a href="#" class="obj-button"> test </a>
+                        </div>
+                        <div class="obj-last">
+                            <div class="plus-model">model</div>
+                        </div>
+                    </li>
+                </ul>
             </div>
             <div class="col-6"></div>
             <div class="col-4">
@@ -53,9 +65,9 @@
 </body>
 
 <!-- my js -->
-<script type="text/javascript" src="scripts/js/controls.js"></script>
+<script type="text/javascript" src="src/js/controls.js"></script>
 
 <!-- include frameworks -->
-<script type="text/javascript" src="scripts/js/lib/jquery-3.3.1.min.js"></script>
-<script type="text/javascript" src="scripts/js/lib/bootstrap.min.js"></script>
+<script type="text/javascript" src="src/js/lib/jquery-3.3.1.min.js"></script>
+<script type="text/javascript" src="src/js/lib/bootstrap.min.js"></script>
 </html>
