@@ -29,10 +29,14 @@ function degToRad(degrees) {
 }
 
 class Model3D {
-    constructor(hasTexture = false) {
+    constructor(objName, fileName, hasTexture = false) {
+        this.objName = objName;
+        this.fileName = fileName;
         this.hasTexture = hasTexture;
         this.vertexPositionBuffer = gl.createBuffer();
         this.vertexNormalBuffer = gl.createBuffer();
+        this.transform = objTransform[fileName].slice();
+        this.hasCreatedTag = false;
         if (this.hasTexture) {
             this.vertexTextureCoordBuffer = gl.createBuffer();
             this.vertexIndexBuffer = gl.createBuffer();
@@ -45,9 +49,9 @@ class Model3D {
 }
 
 // var filenames = ["Csie.json", "Teapot.json", "Plant.json"];
-var filenames = ["Csie.json", "Plant.json"];
-var fileWithTextures = ["Teapot_round.json"];
-var objects = {}
+var filenames = { "Csie.json": 0, "Plant.json": 0 };
+var fileWithTextures = { "Teapot_round.json": 0 };
+var objects = []
 var objTransform = {
     // Scale, Rotation, Position, Shear
     "Csie.json": [
@@ -76,31 +80,36 @@ var objTransform = {
     ],
 }
 
+var originalScales = {
+    "Csie.json": 20,
+    "Teapot.json": 30,
+    "Plant.json": 20,
+    "Teapot_round.json": 1,
+}
+
+
 function setPositions() {
-    filenames.concat(fileWithTextures).forEach((filename) => {
-        if (filename in objects) {
-            let curMatrix = objects[filename].matrix;
-            mat4.identity(curMatrix);
-            mat4.scale(curMatrix, objTransform[filename][0]);
-            mat4.rotateX(curMatrix, degToRad(objTransform[filename][1][0]));
-            mat4.rotateY(curMatrix, degToRad(objTransform[filename][1][1]));
-            mat4.rotateZ(curMatrix, degToRad(objTransform[filename][1][2]));
-            mat4.translate(curMatrix, objTransform[filename][2]);
+    objects.forEach((obj) => {
+        let curMatrix = obj.matrix;
+        mat4.identity(curMatrix);
+        mat4.scale(curMatrix, obj.transform[0]);
+        mat4.rotateX(curMatrix, degToRad(obj.transform[1][0]));
+        mat4.rotateY(curMatrix, degToRad(obj.transform[1][1]));
+        mat4.rotateZ(curMatrix, degToRad(obj.transform[1][2]));
+        mat4.translate(curMatrix, obj.transform[2]);
 
-            let shearMatrix = mat4.create();
-            for(let i = 0; i < 2; ++i) {
-                mat4.identity(shearMatrix);
-                shearMatrix[4 + i * 4] = 1 / Math.tan(degToRad(objTransform[filename][3][i]));
-                mat4.multiply(curMatrix, shearMatrix, curMatrix);
-            }
-
-            mat4.translate(curMatrix, objTransform[filename][2]);
+        let shearMatrix = mat4.create();
+        for(let i = 0; i < 2; ++i) {
+            mat4.identity(shearMatrix);
+            shearMatrix[4 + i * 4] = 1 / Math.tan(degToRad(obj.transform[3][i]));
+            mat4.multiply(curMatrix, shearMatrix, curMatrix);
         }
+
+        mat4.translate(curMatrix, obj.transform[2]);
     });
 }
 
-function handleLoadedObject(data, hasTexture, originalScale) {
-    let object = new Model3D(hasTexture);
+function handleLoadedObject(object, data, hasTexture, originalScale) {
     gl.bindBuffer(gl.ARRAY_BUFFER, object.vertexNormalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.vertexNormals), gl.STATIC_DRAW);
     object.vertexNormalBuffer.itemSize = 3;
@@ -136,7 +145,6 @@ function handleLoadedObject(data, hasTexture, originalScale) {
         object.vertexBackColorBuffer.itemSize = 3;
         object.vertexBackColorBuffer.numItems = data.vertexBackcolors.length / 3;
     }
-    return object;
 }
 
 // Check for the various File API support.
@@ -157,11 +165,17 @@ function handleLoadedObject(data, hasTexture, originalScale) {
 
 // reader.readAsText(filename);
 
-var originalScales = {
-    "Csie.json": 20,
-    "Teapot.json": 30,
-    "Plant.json": 20,
-    "Teapot_round.json": 1,
+function getObjName(filename) {
+    objName = filename.slice(0, -5);
+    if (filename in filenames) {
+        filenames[filename] += 1;
+        return objName + '-' + filenames[filename].toString();
+    }
+    else if (filename in fileWithTextures) {
+        fileWithTextures[filename] += 1;
+        return objName + '-' + fileWithTextures[filename].toString();
+    }
+    else return "NotFound";
 }
 
 function loadObject(filename, hasTexture) {
@@ -170,9 +184,11 @@ function loadObject(filename, hasTexture) {
     request.open("GET", join(models_path, filename));
     request.onreadystatechange = function () {
         if (request.readyState == 4) {
-            let obj = handleLoadedObject(JSON.parse(request.responseText), hasTexture, originalScales[filename]);
+            let objName = getObjName(filename);
+            let obj = new Model3D(objName, filename, hasTexture);
+            handleLoadedObject(obj, JSON.parse(request.responseText), hasTexture, originalScales[filename]);
             obj.matrix = mat4.create();
-            objects[filename] = obj
+            objects.push(obj);
         }
     }
     request.overrideMimeType("application/json");
@@ -180,15 +196,9 @@ function loadObject(filename, hasTexture) {
 }
 
 function loadObjects() {
-    let tmpMatrix = mat4.create();
-    filenames.forEach((filename) => { loadObject(filename); });
-    fileWithTextures.forEach((filename) => { loadObject(filename, true); });
+    ["Csie.json", "Plant.json"].forEach((filename) => { loadObject(filename); });
+    ["Teapot_round.json"].forEach((filename) => { loadObject(filename, true); });
 }
-
-var teapotVertexPositionBuffer;
-var teapotVertexNormalBuffer;
-var teapotVertexTextureCoordBuffer;
-var teapotVertexIndexBuffer;
 
 function handleLoadedTexture(texture) {
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -243,31 +253,22 @@ function drawScene() {
     mat4.multiply(pMatrix, cameraMatrix, pMatrix);
 
     setPositions();
-    textureMode[0] = 0;
-    gl.enableVertexAttribArray(shaderProgram.vertexFrontColorAttribute);
-    filenames.forEach((filename, idx) => {
-        // shadingMode[0] = idx;
-        if (filename in objects) {
-            let obj = objects[filename];
-            mat4.set(obj.matrix, mvMatrix);
+    objects.forEach((obj) => {
+        mat4.set(obj.matrix, mvMatrix);
+        bindVertexAndNormal(obj);
+        if (!obj.hasTexture) {
+            textureMode[0] = 0;
             setMatrixUniforms();
-            bindVertexAndNormal(obj);
+            gl.enableVertexAttribArray(shaderProgram.vertexFrontColorAttribute);
             gl.bindBuffer(gl.ARRAY_BUFFER, obj.vertexFrontColorBuffer);
             gl.vertexAttribPointer(shaderProgram.vertexFrontColorAttribute, obj.vertexFrontColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, obj.vertexPositionBuffer.numItems);
+            gl.disableVertexAttribArray(shaderProgram.vertexFrontColorAttribute);
         }
-    });
-    gl.disableVertexAttribArray(shaderProgram.vertexFrontColorAttribute);
-
-    textureMode[0] = 1;
-    gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
-    fileWithTextures.forEach((filename) => {
-        // shadingMode[0] = 2;
-        if (filename in objects) {
-            let obj = objects[filename];
-            mat4.set(obj.matrix, mvMatrix);
+        else {
+            textureMode[0] = 1;
             setMatrixUniforms();
-            bindVertexAndNormal(obj);
+            gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, galvanizedTexture);
             gl.uniform1i(shaderProgram.samplerUniform, 0);
@@ -275,9 +276,9 @@ function drawScene() {
             gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, obj.vertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.vertexIndexBuffer);
             gl.drawElements(gl.TRIANGLES, obj.vertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+            gl.disableVertexAttribArray(shaderProgram.textureCoordAttribute);
         }
     });
-    gl.disableVertexAttribArray(shaderProgram.textureCoordAttribute);
 }
 
 var lastTime = 0;
